@@ -3,14 +3,11 @@ plugins {
 }
 
 repositories {
-	mavenLocal()
-	maven {
-		url = 'https://repo.runelite.net'
-	}
 	mavenCentral()
+	maven { url = 'https://repo.runelite.net' }
 }
 
-def runeLiteVersion = '1.6.35'
+def runeLiteVersion = '1.6.38'
 
 dependencies {
 	compileOnly group: 'net.runelite', name:'client', version: runeLiteVersion
@@ -22,7 +19,7 @@ dependencies {
 	testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
 }
 
-group = 'com.example'
+group = 'scapecloud.runelite'
 version = '1.0-SNAPSHOT'
 sourceCompatibility = '1.8'
 
