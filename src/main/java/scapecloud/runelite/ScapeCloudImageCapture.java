@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018, Lotto <https://github.com/devLotto>
  * Copyright (c) 2019, Alexsuperfly <https://github.com/Alexsuperfly>
+ * Copyright (c) 2021, ScapeCloud
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
