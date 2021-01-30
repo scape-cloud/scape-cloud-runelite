@@ -730,7 +730,6 @@ public class ScapeCloudPlugin extends Plugin
 		// Draw the game onto the screenshot
 		graphics.drawImage(image, gameOffsetX, gameOffsetY, null);
 
-		System.out.println(api.isAuthenticated() + ", " + config.email() + ", " + config.password());
 		if (!api.isAuthenticated() && !config.email().equals("") && !config.password().equals("")) {
 			api.authenticate(config.email(), config.password());
 		}

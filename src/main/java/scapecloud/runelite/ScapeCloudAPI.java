@@ -25,7 +25,13 @@
 package scapecloud.runelite;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Actor;
+import net.runelite.api.Client;
+import net.runelite.api.Player;
+import net.runelite.api.WorldType;
+import net.runelite.api.coords.WorldPoint;
 import scapecloud.runelite.api.Authorization;
 import scapecloud.runelite.api.Credentials;
 import scapecloud.runelite.api.Error;
@@ -50,9 +56,12 @@ import java.awt.TrayIcon;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
@@ -60,7 +69,7 @@ class ScapeCloudAPI {
 
     private static final String FIREBASE_AUTH = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
     private static final String FIREBASE_REFRESH = "https://securetoken.googleapis.com/v1/token?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
-    private static final String SCAPECLOUD_UPLOAD = "https://scape-cloud.tmwed.vercel.app/api/upload";
+    private static final String SCAPECLOUD_UPLOAD = "http://localhost:3000/api/upload";
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType PNG = MediaType.parse("image/png");
@@ -85,7 +94,6 @@ class ScapeCloudAPI {
     }
 
     public void authenticate(String email, String password) {
-        System.out.println("authenticate: " + email + ", " + password);
         Request request = new Request.Builder()
                 .url(FIREBASE_AUTH)
                 .post(RequestBody.create(JSON, GSON.toJson(new Credentials(email, password))))
@@ -132,10 +140,11 @@ class ScapeCloudAPI {
         }
     }
 
-    public void upload(Image image, boolean notify) {
+    public void upload(Image image, String metadata, boolean notify) {
         RequestBody body = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("file", image.getName(), RequestBody.create(PNG, image.getFile()))
+                .addFormDataPart("metadata", metadata)
                 .build();
 
         Request request = new Request.Builder()
@@ -170,6 +179,62 @@ class ScapeCloudAPI {
                 }
             }
         });
+    }
+
+    public String createMetadata(Client client) {
+        final Gson gson = new Gson();
+        Player player = client.getLocalPlayer();
+        List<Player> players = client.getPlayers();
+        WorldPoint point;
+        int[] location = new int[3];
+        int combatLevel = 3;
+        int world = client.getWorld();
+        Object[] worldType = client.getWorldType().toArray();
+        int totalLevel = client.getTotalLevel();
+        String accountType = client.getAccountType().name();
+        boolean isIronman = client.getAccountType().isIronman();
+        String skullIcon = null;
+        final String playerName = player != null ? player.getName() : "";
+
+        Stream<ScapeCloudMetadata.OtherPlayer> nearbyPlayersStream = players.stream().map(
+                p -> new ScapeCloudMetadata.OtherPlayer(
+                    p.getName(),
+                    p.isFriend(),
+                    p.isFriendsChatMember(),
+                    p.getTeam(),
+                    p.getCombatLevel()
+                )
+            ).filter(p -> !p.getPlayerName().equals(playerName));
+
+        if (player != null) {
+            point = player.getWorldLocation();
+            location[0] = point.getX();
+            location[1] = point.getY();
+            location[2] = point.getPlane();
+
+            combatLevel = player.getCombatLevel();
+            if (player.getSkullIcon() != null) {
+                skullIcon = player.getSkullIcon().name();
+            }
+        }
+
+        String eventType = "NOT_IMPLEMENTED";
+
+        return gson.toJson(
+                new ScapeCloudMetadata(
+                        playerName,
+                        accountType,
+                        skullIcon,
+                        eventType,
+                        gson.toJson(nearbyPlayersStream.toArray()),
+                        gson.toJson(worldType),
+                        location,
+                        combatLevel,
+                        world,
+                        totalLevel,
+                        isIronman
+                )
+        );
     }
 
 }
