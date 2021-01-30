@@ -47,6 +47,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 
 import static net.runelite.client.RuneLite.SCREENSHOT_DIR;
 
@@ -119,7 +120,7 @@ public class ScapeCloudImageCapture {
 
             if (api.isAuthenticated()) {
                 byte[] bytes = Files.readAllBytes(screenshotFile.toPath());
-                api.upload(new Image(screenshotFile.getName(), bytes), notify);
+                api.upload(new Image(screenshotFile.getName(), bytes), api.createMetadata(client), notify);
             } else if (notify) {
                 notifier.notify("A screenshot was saved to " + screenshotFile, TrayIcon.MessageType.INFO);
             }
