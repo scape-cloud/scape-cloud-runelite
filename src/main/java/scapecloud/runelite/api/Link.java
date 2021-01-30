@@ -31,5 +31,6 @@ public class Link {
 
     private final String status;
     private final String data;
+    private final String message;
 
 }

@@ -87,7 +87,7 @@ import net.runelite.client.util.Text;
 @PluginDescriptor(
 		name = "ScapeCloud",
 		description = "Enable the manual and automatic taking of screenshots",
-		tags = {"external", "images", "imgur", "integration", "notifications"}
+		tags = {"external", "images", "scapecloud", "integration", "notifications"}
 )
 @Slf4j
 public class ScapeCloudPlugin extends Plugin
@@ -155,6 +155,9 @@ public class ScapeCloudPlugin extends Plugin
 	private ScapeCloudImageCapture imageCapture;
 
 	@Inject
+	private ScapeCloudLogin login;
+
+	@Inject
 	private KeyManager keyManager;
 
 	@Inject
@@ -163,7 +166,8 @@ public class ScapeCloudPlugin extends Plugin
 	@Getter(AccessLevel.PACKAGE)
 	private BufferedImage reportButton;
 
-	private NavigationButton titleBarButton;
+	private NavigationButton screenshotButton;
+	private NavigationButton scapecloudButton;
 
 	private String kickPlayerName;
 
@@ -189,12 +193,13 @@ public class ScapeCloudPlugin extends Plugin
 		SCREENSHOT_DIR.mkdirs();
 		keyManager.registerKeyListener(hotkeyListener);
 
-		final BufferedImage iconImage = ImageUtil.loadImageResource(getClass(), "screenshot.png");
+		final BufferedImage screenshotIcon = ImageUtil.loadImageResource(getClass(), "screenshot.png");
+		final BufferedImage scapecloudIcon = ImageUtil.loadImageResource(getClass(), "scapecloud_nav.png");
 
-		titleBarButton = NavigationButton.builder()
+		screenshotButton = NavigationButton.builder()
 				.tab(false)
 				.tooltip("Take screenshot")
-				.icon(iconImage)
+				.icon(screenshotIcon)
 				.onClick(this::manualScreenshot)
 				.popup(ImmutableMap
 						.<String, Runnable>builder()
@@ -205,11 +210,19 @@ public class ScapeCloudPlugin extends Plugin
 						.build())
 				.build();
 
-		clientToolbar.addNavigation(titleBarButton);
+		scapecloudButton = NavigationButton.builder()
+				.tab(false)
+				.tooltip("ScapeCloud Login")
+				.icon(scapecloudIcon)
+				.onClick(login::display)
+				.build();
+
+		clientToolbar.addNavigation(screenshotButton);
+		clientToolbar.addNavigation(scapecloudButton);
 
 		spriteManager.getSpriteAsync(SpriteID.CHATBOX_REPORT_BUTTON, 0, s -> reportButton = s);
 
-		if (!config.email().equals("") && !config.password().equals("")) {
+		if (config.email().length() > 0 && config.password().length() > 0) {
 			executor.submit(() -> api.authenticate(config.email(), config.password()));
 		}
 	}
@@ -218,7 +231,8 @@ public class ScapeCloudPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		overlayManager.remove(screenshotOverlay);
-		clientToolbar.removeNavigation(titleBarButton);
+		clientToolbar.removeNavigation(screenshotButton);
+		clientToolbar.removeNavigation(scapecloudButton);
 		keyManager.unregisterKeyListener(hotkeyListener);
 		kickPlayerName = null;
 	}
@@ -729,12 +743,6 @@ public class ScapeCloudPlugin extends Plugin
 
 		// Draw the game onto the screenshot
 		graphics.drawImage(image, gameOffsetX, gameOffsetY, null);
-
-		System.out.println(api.isAuthenticated() + ", " + config.email() + ", " + config.password());
-		if (!api.isAuthenticated() && !config.email().equals("") && !config.password().equals("")) {
-			api.authenticate(config.email(), config.password());
-		}
-
 		imageCapture.takeScreenshot(screenshot, fileName, subDir, config.notifyWhenTaken());
 	}
 

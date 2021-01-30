@@ -26,12 +26,6 @@ package scapecloud.runelite;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import scapecloud.runelite.api.Authorization;
-import scapecloud.runelite.api.Credentials;
-import scapecloud.runelite.api.Error;
-import scapecloud.runelite.api.Image;
-import scapecloud.runelite.api.Link;
-import scapecloud.runelite.api.Refresh;
 import net.runelite.client.Notifier;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -42,6 +36,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import scapecloud.runelite.api.Authorization;
+import scapecloud.runelite.api.Credentials;
+import scapecloud.runelite.api.Error;
+import scapecloud.runelite.api.Image;
+import scapecloud.runelite.api.Link;
+import scapecloud.runelite.api.Refresh;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 @Slf4j
 @Singleton
@@ -85,7 +86,10 @@ class ScapeCloudAPI {
     }
 
     public void authenticate(String email, String password) {
-        System.out.println("authenticate: " + email + ", " + password);
+        authenticate(email, password, () -> {}, error -> {});
+    }
+
+    public void authenticate(String email, String password, Runnable success, Consumer<Error> failure) {
         Request request = new Request.Builder()
                 .url(FIREBASE_AUTH)
                 .post(RequestBody.create(JSON, GSON.toJson(new Credentials(email, password))))
@@ -98,8 +102,10 @@ class ScapeCloudAPI {
                 idToken.set(auth.getIdToken());
                 refreshToken.set(auth.getIdToken());
                 executor.schedule(this::reauthenticate, auth.getExpiresIn() - 300, TimeUnit.SECONDS);
+                success.run();
             } else {
-                GSON.fromJson(json, Error.class);
+                Error error = GSON.fromJson(json, Error.class);
+                failure.accept(error);
             }
         } catch (IOException e) {
             log.warn("Exception occurred while authenticating with ScapeCloud.", e);
@@ -155,7 +161,6 @@ class ScapeCloudAPI {
                 String body = response.body().string();
                 Link link = GSON.fromJson(body, Link.class);
                 if (response.isSuccessful()) {
-
                     StringSelection selection = new StringSelection(link.getData());
                     Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                     clipboard.setContents(selection, selection);
@@ -165,8 +170,7 @@ class ScapeCloudAPI {
                     }
 
                 } else {
-                    System.out.println(body);
-                    log.warn("ScapeCloud Upload Error: " + link.getStatus());
+                    log.warn("ScapeCloud Upload Error: " + link.getMessage());
                 }
             }
         });

@@ -117,8 +117,6 @@ public class ScapeCloudImageCapture {
 
             ImageIO.write(screenshot, "PNG", screenshotFile);
 
-            System.out.println(screenshotFile.getName() + ", " + api.isAuthenticated());
-
             if (api.isAuthenticated()) {
                 byte[] bytes = Files.readAllBytes(screenshotFile.toPath());
                 api.upload(new Image(screenshotFile.getName(), bytes), notify);
