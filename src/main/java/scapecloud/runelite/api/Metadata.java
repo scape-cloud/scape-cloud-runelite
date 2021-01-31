@@ -25,20 +25,24 @@
 package scapecloud.runelite.api;
 
 import lombok.Data;
+import net.runelite.api.WorldType;
+
+import java.util.List;
+import java.util.Set;
 
 @Data
-public class ScapeCloudMetadata {
+public class Metadata {
 
     private final String playerName;
     private final String accountType;
     private final String skullIcon;
     private final String eventType;
-    private final String nearbyPlayers;
-    private final String worldType;
+    private final List<OtherPlayer> nearbyPlayers;
+    private final Set<WorldType> worldType;
     private final int[] location;
     private final int combatLevel;
     private final int world;
     private final int totalLevel;
     private final boolean isIronman;
-    
+
 }

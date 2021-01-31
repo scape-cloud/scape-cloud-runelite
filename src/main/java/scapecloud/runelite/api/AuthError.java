@@ -27,7 +27,7 @@ package scapecloud.runelite.api;
 import lombok.Data;
 
 @Data
-public class Error {
+public class AuthError {
 
     private final Type error;
 
