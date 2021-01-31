@@ -120,7 +120,7 @@ public class ScapeCloudImageCapture {
 
             if (api.isAuthenticated()) {
                 byte[] bytes = Files.readAllBytes(screenshotFile.toPath());
-                api.upload(new Image(screenshotFile.getName(), bytes), api.createMetadata(client), notify);
+                api.upload(new Image(screenshotFile.getName(), bytes), notify);
             } else if (notify) {
                 notifier.notify("A screenshot was saved to " + screenshotFile, TrayIcon.MessageType.INFO);
             }

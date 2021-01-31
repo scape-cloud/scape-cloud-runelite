@@ -25,12 +25,9 @@
 package scapecloud.runelite;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
-import net.runelite.api.WorldType;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.Notifier;
 import okhttp3.Call;
@@ -44,10 +41,13 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import scapecloud.runelite.api.Authorization;
 import scapecloud.runelite.api.Credentials;
-import scapecloud.runelite.api.Error;
+import scapecloud.runelite.api.AuthError;
 import scapecloud.runelite.api.Image;
 import scapecloud.runelite.api.Link;
+import scapecloud.runelite.api.Metadata;
+import scapecloud.runelite.api.OtherPlayer;
 import scapecloud.runelite.api.Refresh;
+import scapecloud.runelite.api.UploadError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -56,13 +56,13 @@ import java.awt.TrayIcon;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -70,12 +70,15 @@ class ScapeCloudAPI {
 
     private static final String FIREBASE_AUTH = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
     private static final String FIREBASE_REFRESH = "https://securetoken.googleapis.com/v1/token?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
-    private static final String SCAPECLOUD_UPLOAD = "http://localhost:3000/api/upload";
+    private static final String SCAPECLOUD_UPLOAD = "https://scape-cloud.tmwed.vercel.app/api/upload";
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType PNG = MediaType.parse("image/png");
     private static final Gson GSON = new Gson();
 
+    private static final Function<Player, OtherPlayer> PLAYER_MAPPER = p -> new OtherPlayer(p.getName(), p.isFriend(), p.isFriendsChatMember(), p.getTeam(), p.getCombatLevel());
+
+    private final Client client;
     private final Notifier notifier;
     private final OkHttpClient okHttpClient;
     private ScheduledExecutorService executor;
@@ -84,7 +87,8 @@ class ScapeCloudAPI {
     private final AtomicReference<String> refreshToken = new AtomicReference<>();
 
     @Inject
-    private ScapeCloudAPI(Notifier notifier, OkHttpClient okHttpClient, ScheduledExecutorService executor) {
+    private ScapeCloudAPI(Client client, Notifier notifier, OkHttpClient okHttpClient, ScheduledExecutorService executor) {
+        this.client = client;
         this.notifier = notifier;
         this.okHttpClient = okHttpClient;
         this.executor = executor;
@@ -98,7 +102,7 @@ class ScapeCloudAPI {
         authenticate(email, password, () -> {}, error -> {});
     }
 
-    public void authenticate(String email, String password, Runnable success, Consumer<Error> failure) {
+    public void authenticate(String email, String password, Runnable success, Consumer<AuthError> failure) {
         Request request = new Request.Builder()
                 .url(FIREBASE_AUTH)
                 .post(RequestBody.create(JSON, GSON.toJson(new Credentials(email, password))))
@@ -113,7 +117,7 @@ class ScapeCloudAPI {
                 executor.schedule(this::reauthenticate, auth.getExpiresIn() - 300, TimeUnit.SECONDS);
                 success.run();
             } else {
-                Error error = GSON.fromJson(json, Error.class);
+                AuthError error = GSON.fromJson(json, AuthError.class);
                 failure.accept(error);
             }
         } catch (IOException e) {
@@ -140,18 +144,18 @@ class ScapeCloudAPI {
                 refreshToken.set(refresh.getRefreshToken());
                 executor.schedule(this::reauthenticate, refresh.getExpiresIn() - 300, TimeUnit.SECONDS);
             } else {
-                GSON.fromJson(json, Error.class);
+                GSON.fromJson(json, AuthError.class);
             }
         } catch (IOException e) {
             log.warn("Exception occurred while re-authenticating with ScapeCloud.", e);
         }
     }
 
-    public void upload(Image image, String metadata, boolean notify) {
+    public void upload(Image image, boolean notify) {
         RequestBody body = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("file", image.getName(), RequestBody.create(PNG, image.getFile()))
-                .addFormDataPart("metadata", metadata)
+                .addFormDataPart("metadata", createMetadata())
                 .build();
 
         Request request = new Request.Builder()
@@ -163,14 +167,14 @@ class ScapeCloudAPI {
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                log.warn("Exception occurred while uploading to ScapeCloud.", e);
+                log.info("Exception occurred while uploading to ScapeCloud.", e);
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String body = response.body().string();
-                Link link = GSON.fromJson(body, Link.class);
                 if (response.isSuccessful()) {
+                    Link link = GSON.fromJson(body, Link.class);
                     StringSelection selection = new StringSelection(link.getData());
                     Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                     clipboard.setContents(selection, selection);
@@ -180,64 +184,42 @@ class ScapeCloudAPI {
                     }
 
                 } else {
-                    log.warn("ScapeCloud Upload Error: " + link.getMessage());
+                    UploadError error = GSON.fromJson(body, UploadError.class);
+                    log.info("ScapeCloud Upload Error: " + error.getMessage());
                 }
             }
         });
     }
 
-    public String createMetadata(Client client) {
-        final Gson gson = new Gson();
+    public String createMetadata() {
         Player player = client.getLocalPlayer();
+        if (player == null) return "";
+
         List<Player> players = client.getPlayers();
-        WorldPoint point;
-        int[] location = new int[3];
-        int combatLevel = 3;
-        int world = client.getWorld();
-        Object[] worldType = client.getWorldType().toArray();
-        int totalLevel = client.getTotalLevel();
-        String accountType = client.getAccountType().name();
-        boolean isIronman = client.getAccountType().isIronman();
-        String skullIcon = null;
-        final String playerName = player != null ? player.getName() : "";
+        WorldPoint point = player.getWorldLocation();
+        String skullIcon = player.getSkullIcon() != null ? player.getSkullIcon().name() : "";
 
-        Stream<ScapeCloudMetadata.OtherPlayer> nearbyPlayersStream = players.stream().map(
-                p -> new ScapeCloudMetadata.OtherPlayer(
-                    p.getName(),
-                    p.isFriend(),
-                    p.isFriendsChatMember(),
-                    p.getTeam(),
-                    p.getCombatLevel()
-                )
-            ).filter(p -> !p.getPlayerName().equals(playerName));
+        List<OtherPlayer> nearby = players.stream()
+                .filter(p -> !p.equals(player))
+                .map(PLAYER_MAPPER)
+                .collect(Collectors.toList());
 
-        if (player != null) {
-            point = player.getWorldLocation();
-            location[0] = point.getX();
-            location[1] = point.getY();
-            location[2] = point.getPlane();
-
-            combatLevel = player.getCombatLevel();
-            if (player.getSkullIcon() != null) {
-                skullIcon = player.getSkullIcon().name();
-            }
-        }
 
         String eventType = "NOT_IMPLEMENTED";
 
-        return gson.toJson(
-                new ScapeCloudMetadata(
-                        playerName,
-                        accountType,
+        return GSON.toJson(
+                new Metadata(
+                        player.getName(),
+                        client.getAccountType().name(),
                         skullIcon,
                         eventType,
-                        gson.toJson(nearbyPlayersStream.toArray()),
-                        gson.toJson(worldType),
-                        location,
-                        combatLevel,
-                        world,
-                        totalLevel,
-                        isIronman
+                        nearby,
+                        client.getWorldType(),
+                        new int[] { point.getX(), point.getY(), point.getPlane() },
+                        player.getCombatLevel(),
+                        client.getWorld(),
+                        client.getTotalLevel(),
+                        client.getAccountType().isIronman()
                 )
         );
     }

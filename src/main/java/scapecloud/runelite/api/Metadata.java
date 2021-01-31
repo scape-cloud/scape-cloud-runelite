@@ -27,34 +27,18 @@ package scapecloud.runelite.api;
 import lombok.Data;
 
 @Data
-public class Result {
+public class ScapeCloudMetadata {
 
-    private final Authorization authorization;
-    private final Error error;
-    private final Exception exception;
-
-    public boolean isSuccess() {
-        return authorization != null;
-    }
-
-    public boolean isError() {
-        return error != null;
-    }
-
-    public boolean isException() {
-        return exception != null;
-    }
-
-    public static Result ok(Authorization authorization) {
-        return new Result(authorization, null, null);
-    }
-
-    public static Result error(Error error) {
-        return new Result(null, error, null);
-    }
-
-    public static Result exception(Exception exception) {
-        return new Result(null, null, exception);
-    }
-
+    private final String playerName;
+    private final String accountType;
+    private final String skullIcon;
+    private final String eventType;
+    private final String nearbyPlayers;
+    private final String worldType;
+    private final int[] location;
+    private final int combatLevel;
+    private final int world;
+    private final int totalLevel;
+    private final boolean isIronman;
+    
 }

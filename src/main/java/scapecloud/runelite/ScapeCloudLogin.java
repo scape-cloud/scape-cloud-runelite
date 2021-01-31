@@ -68,7 +68,6 @@ public class ScapeCloudLogin {
     }
 
     private void initialize() {
-        System.out.println(UIManager.getLookAndFeel().getClass());
         frame = new JFrame("ScapeCould Login");
         frame.setSize(300, 300);
         frame.setResizable(false);
