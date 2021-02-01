@@ -58,6 +58,7 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -85,6 +86,7 @@ class ScapeCloudAPI {
 
     private final AtomicReference<String> idToken = new AtomicReference<>();
     private final AtomicReference<String> refreshToken = new AtomicReference<>();
+    private ScheduledFuture<?> refreshTask;
 
     @Inject
     private ScapeCloudAPI(Client client, Notifier notifier, OkHttpClient okHttpClient, ScheduledExecutorService executor) {
@@ -96,6 +98,15 @@ class ScapeCloudAPI {
 
     public boolean isAuthenticated() {
         return idToken.get() != null;
+    }
+
+    public void logout() {
+        idToken.set(null);
+        refreshToken.set(null);
+        if (refreshTask != null) {
+            refreshTask.cancel(true);
+            refreshTask = null;
+        }
     }
 
     public void authenticate(String email, String password) {
@@ -114,7 +125,7 @@ class ScapeCloudAPI {
                 Authorization auth = GSON.fromJson(json, Authorization.class);
                 idToken.set(auth.getIdToken());
                 refreshToken.set(auth.getIdToken());
-                executor.schedule(this::reauthenticate, auth.getExpiresIn() - 300, TimeUnit.SECONDS);
+                refreshTask = executor.schedule(this::reauthenticate, auth.getExpiresIn() - 300, TimeUnit.SECONDS);
                 success.run();
             } else {
                 AuthError error = GSON.fromJson(json, AuthError.class);
@@ -142,7 +153,7 @@ class ScapeCloudAPI {
                 Refresh refresh = GSON.fromJson(json, Refresh.class);
                 idToken.set(refresh.getIdToken());
                 refreshToken.set(refresh.getRefreshToken());
-                executor.schedule(this::reauthenticate, refresh.getExpiresIn() - 300, TimeUnit.SECONDS);
+                refreshTask = executor.schedule(this::reauthenticate, refresh.getExpiresIn() - 300, TimeUnit.SECONDS);
             } else {
                 GSON.fromJson(json, AuthError.class);
             }

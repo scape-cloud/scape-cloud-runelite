@@ -167,7 +167,8 @@ public class ScapeCloudPlugin extends Plugin
 	private BufferedImage reportButton;
 
 	private NavigationButton screenshotButton;
-	private NavigationButton scapecloudButton;
+	private NavigationButton scapecloudLoginButton;
+	private NavigationButton scapecloudLogoutButton;
 
 	private String kickPlayerName;
 
@@ -194,7 +195,8 @@ public class ScapeCloudPlugin extends Plugin
 		keyManager.registerKeyListener(hotkeyListener);
 
 		final BufferedImage screenshotIcon = ImageUtil.loadImageResource(getClass(), "screenshot.png");
-		final BufferedImage scapecloudIcon = ImageUtil.loadImageResource(getClass(), "scapecloud_nav.png");
+		final BufferedImage scapecloudLoginIcon = ImageUtil.loadImageResource(getClass(), "scapecloud_login.png");
+		final BufferedImage scapecloudLogoutIcon = ImageUtil.loadImageResource(getClass(), "scapecloud_logout.png");
 
 		screenshotButton = NavigationButton.builder()
 				.tab(false)
@@ -210,20 +212,27 @@ public class ScapeCloudPlugin extends Plugin
 						.build())
 				.build();
 
-		scapecloudButton = NavigationButton.builder()
+		scapecloudLoginButton = NavigationButton.builder()
 				.tab(false)
 				.tooltip("ScapeCloud Login")
-				.icon(scapecloudIcon)
-				.onClick(login::display)
+				.icon(scapecloudLoginIcon)
+				.onClick(this::loginClick)
+				.build();
+
+		scapecloudLogoutButton = NavigationButton.builder()
+				.tab(false)
+				.tooltip("ScapeCloud Logout")
+				.icon(scapecloudLogoutIcon)
+				.onClick(this::logoutClick)
 				.build();
 
 		clientToolbar.addNavigation(screenshotButton);
-		clientToolbar.addNavigation(scapecloudButton);
+		clientToolbar.addNavigation(scapecloudLoginButton);
 
 		spriteManager.getSpriteAsync(SpriteID.CHATBOX_REPORT_BUTTON, 0, s -> reportButton = s);
 
 		if (config.email().length() > 0 && config.password().length() > 0) {
-			executor.submit(() -> api.authenticate(config.email(), config.password()));
+			executor.submit(() -> api.authenticate(config.email(), config.password(), this::addAndRemoveButtons, (error) -> {}));
 		}
 	}
 
@@ -232,9 +241,29 @@ public class ScapeCloudPlugin extends Plugin
 	{
 		overlayManager.remove(screenshotOverlay);
 		clientToolbar.removeNavigation(screenshotButton);
-		clientToolbar.removeNavigation(scapecloudButton);
+		clientToolbar.removeNavigation(scapecloudLoginButton);
+		clientToolbar.removeNavigation(scapecloudLogoutButton);
 		keyManager.unregisterKeyListener(hotkeyListener);
 		kickPlayerName = null;
+	}
+
+	public void addAndRemoveButtons()
+	{
+		clientToolbar.removeNavigation(scapecloudLoginButton);
+		clientToolbar.removeNavigation(scapecloudLogoutButton);
+		clientToolbar.addNavigation(api.isAuthenticated()
+				? scapecloudLogoutButton
+				: scapecloudLoginButton);
+	}
+
+	private void loginClick()
+	{
+		SwingUtilities.invokeLater(login::display);
+	}
+
+	private void logoutClick()
+	{
+		SwingUtilities.invokeLater(login::logout);
 	}
 
 	@Subscribe

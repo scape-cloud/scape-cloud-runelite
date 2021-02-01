@@ -36,7 +36,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
-import javax.swing.UIManager;
 import java.awt.event.ActionEvent;
 
 @Singleton
@@ -47,6 +46,9 @@ public class ScapeCloudLogin {
 
     @Inject
     private ScapeCloudAPI api;
+
+    @Inject
+    private ScapeCloudPlugin plugin;
 
     private JFrame frame;
 
@@ -122,9 +124,24 @@ public class ScapeCloudLogin {
                         manager.setConfiguration("scape-cloud", "password", password);
                         JOptionPane.showMessageDialog(frame, "Login Successful", "ScapeCloud Login", JOptionPane.INFORMATION_MESSAGE);
                         frame.setVisible(false);
+                        emailField.setText("");
+                        passwordField.setText("");
+                        plugin.addAndRemoveButtons();
                     },
                     (error) -> JOptionPane.showMessageDialog(frame, error.getError().getMessage(), "ScapeCloud Login", JOptionPane.ERROR_MESSAGE)
             );
+        }
+    }
+
+    public void logout() {
+        if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(frame,
+                "Are you sure you want to log out from ScapeCloud?",
+                "ScapeCloud Logout", JOptionPane.YES_NO_OPTION)
+        ) {
+            api.logout();
+            manager.setConfiguration("scape-cloud", "email", "");
+            manager.setConfiguration("scape-cloud", "password", "");
+            plugin.addAndRemoveButtons();
         }
     }
 }
