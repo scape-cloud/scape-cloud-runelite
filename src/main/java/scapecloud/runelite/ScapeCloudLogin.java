@@ -110,7 +110,7 @@ public class ScapeCloudLogin {
 
 
     private void create(ActionEvent e) {
-        LinkBrowser.browse("https://scape-cloud.tmwed.vercel.app/pricing");
+        LinkBrowser.browse("https://scapecloud.net/sign-up");
     }
 
     private void login(ActionEvent e) {

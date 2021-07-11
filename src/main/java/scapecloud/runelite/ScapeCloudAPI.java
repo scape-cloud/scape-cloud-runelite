@@ -71,7 +71,7 @@ class ScapeCloudAPI {
 
     private static final String FIREBASE_AUTH = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
     private static final String FIREBASE_REFRESH = "https://securetoken.googleapis.com/v1/token?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
-    private static final String SCAPECLOUD_UPLOAD = "https://scape-cloud.tmwed.vercel.app/api/upload";
+    private static final String SCAPECLOUD_UPLOAD = "https://scapecloud.net/api/upload";
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType PNG = MediaType.parse("image/png");
