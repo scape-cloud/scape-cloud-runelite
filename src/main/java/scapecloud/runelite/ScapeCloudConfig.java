@@ -208,10 +208,22 @@ public interface ScapeCloudConfig extends Config
     }
 
     @ConfigItem(
+            keyName = "valuableDropThreshold",
+            name = "Valuable Threshold",
+            description = "The minimum value to save screenshots of valuable drops.",
+            position = 16,
+            section = whatSection
+    )
+    default int valuableDropThreshold()
+    {
+        return 0;
+    }
+
+    @ConfigItem(
             keyName = "untradeableDrop",
             name = "Screenshot Untradeable drops",
             description = "Configures whether or not screenshots are automatically taken when you receive an untradeable drop.",
-            position = 16,
+            position = 17,
             section = whatSection
     )
     default boolean screenshotUntradeableDrop()
@@ -223,7 +235,7 @@ public interface ScapeCloudConfig extends Config
             keyName = "ccKick",
             name = "Screenshot Kicks from FC",
             description = "Take a screenshot when you kick a user from a friends chat.",
-            position = 17,
+            position = 18,
             section = whatSection
     )
     default boolean screenshotKick()
@@ -235,7 +247,7 @@ public interface ScapeCloudConfig extends Config
             keyName = "baHighGamble",
             name = "Screenshot BA high gambles",
             description = "Take a screenshot of your reward from a high gamble at Barbarian Assault.",
-            position = 18,
+            position = 19,
             section = whatSection
     )
     default boolean screenshotHighGamble()
@@ -244,11 +256,23 @@ public interface ScapeCloudConfig extends Config
     }
 
     @ConfigItem(
+            keyName = "collectionLogEntries",
+            name = "Screenshot collection log entries",
+            description = "Take a screenshot when completing an entry in the collection log",
+            position = 20,
+            section = whatSection
+    )
+    default boolean screenshotCollectionLogEntries()
+    {
+        return true;
+    }
+
+    @ConfigItem(
             keyName = "email",
             name = "Email",
             description = "Email for Scape Cloud Service",
             hidden = true,
-            position = 19
+            position = 21
     )
     default String email()
     {
@@ -261,7 +285,7 @@ public interface ScapeCloudConfig extends Config
             description = "Password for Scape Cloud Service",
             secret = true,
             hidden = true,
-            position = 20
+            position = 22
     )
     default String password()
     {
