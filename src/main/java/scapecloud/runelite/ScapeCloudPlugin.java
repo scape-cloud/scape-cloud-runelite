@@ -199,6 +199,8 @@ public class ScapeCloudPlugin extends Plugin
 
 	private String kickPlayerName;
 
+	private long lastManualScreenshot;
+
 	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> config.hotkey())
 	{
 		@Override
@@ -257,6 +259,8 @@ public class ScapeCloudPlugin extends Plugin
 		clientToolbar.addNavigation(scapecloudLoginButton);
 
 		spriteManager.getSpriteAsync(SpriteID.CHATBOX_REPORT_BUTTON, 0, s -> reportButton = s);
+
+		lastManualScreenshot = 0L;
 
 		if (config.email().length() > 0 && config.password().length() > 0) {
 			executor.submit(() -> api.authenticate(config.email(), config.password(), this::addAndRemoveButtons, (error) -> {}));
@@ -672,7 +676,13 @@ public class ScapeCloudPlugin extends Plugin
 
 	private void manualScreenshot()
 	{
-		takeScreenshot("", null);
+		long delta = System.currentTimeMillis() - lastManualScreenshot;
+		if (delta >= THROTTLE_AMOUNT) {
+			takeScreenshot("", null);
+			lastManualScreenshot = System.currentTimeMillis();
+		} else {
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "You are uploading images too quickly, please wait " + (THROTTLE_AMOUNT - delta) + "ms.", null);
+		}
 	}
 
 	/**
