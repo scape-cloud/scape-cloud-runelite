@@ -370,13 +370,9 @@ public class ScapeCloudPlugin extends Plugin
 
 			events.add("quest");
 			events.add("quest_" + questName
-						.replaceAll("\\s","_")
-						.replaceAll("'", "")
-						.replaceAll("\\.", "")
+						.replaceAll("[\\s/]","_")
+						.replaceAll("['\\.!:]", "")
 						.replaceAll("&", "and")
-						.replaceAll("!", "")
-						.replaceAll("/", "_")
-						.replaceAll(":", "")
 			);
 		}
 
