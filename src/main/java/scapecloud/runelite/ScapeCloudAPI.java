@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, ScapeCloud
+ * Copyright (c) 2021, OSRSLog
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ class ScapeCloudAPI {
 
     private static final String FIREBASE_AUTH = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
     private static final String FIREBASE_REFRESH = "https://securetoken.googleapis.com/v1/token?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
-    private static final String SCAPECLOUD_UPLOAD = "https://scapecloud.net/api/upload";
+    private static final String SCAPECLOUD_UPLOAD = "https://osrslog.com/api/upload";
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType PNG = MediaType.parse("image/png");
@@ -132,7 +132,7 @@ class ScapeCloudAPI {
                 failure.accept(error);
             }
         } catch (IOException e) {
-            log.warn("Exception occurred while authenticating with ScapeCloud.", e);
+            log.warn("Exception occurred while authenticating with OSRSLog.", e);
         }
     }
 
@@ -158,7 +158,7 @@ class ScapeCloudAPI {
                 GSON.fromJson(json, AuthError.class);
             }
         } catch (IOException e) {
-            log.warn("Exception occurred while re-authenticating with ScapeCloud.", e);
+            log.warn("Exception occurred while re-authenticating with OSRSLog.", e);
         }
     }
 
@@ -178,7 +178,7 @@ class ScapeCloudAPI {
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                log.info("Exception occurred while uploading to ScapeCloud.", e);
+                log.info("Exception occurred while uploading to OSRSLog.", e);
             }
 
             @Override
@@ -196,7 +196,7 @@ class ScapeCloudAPI {
 
                 } else {
                     UploadError error = GSON.fromJson(body, UploadError.class);
-                    log.info("ScapeCloud Upload Error: " + error.getMessage());
+                    log.info("OSRSLog Upload Error: " + error.getMessage());
                 }
             }
         });

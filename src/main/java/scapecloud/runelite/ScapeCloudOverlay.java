@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018, Lotto <https://github.com/devLotto>
- * Copyright (c) 2021, ScapeCloud
+ * Copyright (c) 2021, OSRSLog
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018, Lotto <https://github.com/devLotto>
- * Copyright (c) 2021, ScapeCloud
+ * Copyright (c) 2021, OSRSLog
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,7 +88,7 @@ import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.util.Text;
 
 @PluginDescriptor(
-		name = "ScapeCloud",
+		name = "OSRSLog",
 		description = "Enable the manual and automatic taking of screenshots",
 		tags = {"external", "images", "scapecloud", "integration", "notifications"}
 )
@@ -243,14 +243,14 @@ public class ScapeCloudPlugin extends Plugin
 
 		scapecloudLoginButton = NavigationButton.builder()
 				.tab(false)
-				.tooltip("ScapeCloud Login")
+				.tooltip("OSRSLog Login")
 				.icon(scapecloudLoginIcon)
 				.onClick(this::loginClick)
 				.build();
 
 		scapecloudLogoutButton = NavigationButton.builder()
 				.tab(false)
-				.tooltip("ScapeCloud Logout")
+				.tooltip("OSRSLog Logout")
 				.icon(scapecloudLogoutIcon)
 				.onClick(this::logoutClick)
 				.build();

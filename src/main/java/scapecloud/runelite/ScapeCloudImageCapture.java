@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2018, Lotto <https://github.com/devLotto>
  * Copyright (c) 2019, Alexsuperfly <https://github.com/Alexsuperfly>
- * Copyright (c) 2021, ScapeCloud
+ * Copyright (c) 2021, OSRSLog
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,8 +91,6 @@ public class ScapeCloudImageCapture {
             String playerDir = client.getLocalPlayer().getName();
             if (worldTypes.contains(WorldType.DEADMAN)) {
                 playerDir += "-Deadman";
-            } else if (worldTypes.contains(WorldType.LEAGUE)) {
-                playerDir += "-League";
             }
 
             if (!Strings.isNullOrEmpty(subDir)) {

@@ -110,7 +110,7 @@ public class ScapeCloudLogin {
 
 
     private void create(ActionEvent e) {
-        LinkBrowser.browse("https://scapecloud.net/sign-up");
+        LinkBrowser.browse("https://osrslog.com/sign-up");
     }
 
     private void login(ActionEvent e) {
@@ -136,7 +136,7 @@ public class ScapeCloudLogin {
     public void logout() {
         if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(frame,
                 "Are you sure you want to log out from ScapeCloud?",
-                "ScapeCloud Logout", JOptionPane.YES_NO_OPTION)
+                "OSRSLog Logout", JOptionPane.YES_NO_OPTION)
         ) {
             api.logout();
             manager.setConfiguration("scape-cloud", "email", "");
