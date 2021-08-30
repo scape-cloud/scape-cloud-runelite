@@ -26,12 +26,7 @@ package scapecloud.runelite;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.InventoryID;
-import net.runelite.api.Player;
-import net.runelite.api.Skill;
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
@@ -57,6 +52,7 @@ import java.awt.TrayIcon;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -234,7 +230,7 @@ class ScapeCloudAPI {
         int[] boostedLevels = client.getBoostedSkillLevels();
         int[] skillExp = client.getSkillExperiences();
         int[] realSkillLevels = client.getRealSkillLevels();
-        for (int i = 0; i < realSkillLevels.length; i++) {
+        for (int i = 0; i < totalSkills; i++) {
             skills[i] = new SkillInfo(
                     skillValues[i].getName(),
                     boostedLevels[i],
@@ -263,6 +259,18 @@ class ScapeCloudAPI {
 
         SkillInfo[] skills = getSkills(client);
 
+        ComposedItem[] equipment = Arrays.stream(client.getItemContainer(InventoryID.EQUIPMENT).getItems())
+                .map(item -> {
+                    ItemComposition comp = client.getItemDefinition(item.getId());
+                    return toComposedItem(comp, item.getQuantity());
+                }).toArray(ComposedItem[]::new);
+
+        ComposedItem[] inventory = Arrays.stream(client.getItemContainer(InventoryID.INVENTORY).getItems())
+                .map(item -> {
+                    ItemComposition comp = client.getItemDefinition(item.getId());
+                    return toComposedItem(comp, item.getQuantity());
+                }).toArray(ComposedItem[]::new);
+
         return GSON.toJson(
                 new Metadata(
                         player.getName(),
@@ -276,10 +284,18 @@ class ScapeCloudAPI {
                         client.getWorld(),
                         client.getTotalLevel(),
                         client.getAccountType().isIronman(),
-                        client.getItemContainer(InventoryID.EQUIPMENT).getItems(),
-                        client.getItemContainer(InventoryID.INVENTORY).getItems(),
+                        equipment,
+                        inventory,
                         skills
                 )
+        );
+    }
+
+    ComposedItem toComposedItem(ItemComposition itemComposition, int quantity) {
+        return new ComposedItem(
+                itemComposition.getId(),
+                quantity,
+                itemComposition.getName()
         );
     }
 

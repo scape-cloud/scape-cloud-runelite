@@ -26,6 +26,7 @@ package scapecloud.runelite.api;
 
 import lombok.Data;
 import net.runelite.api.Item;
+import net.runelite.api.ItemComposition;
 import net.runelite.api.WorldType;
 
 import java.util.List;
@@ -45,8 +46,8 @@ public class Metadata {
     private final int world;
     private final int totalLevel;
     private final boolean isIronman;
-    private final Item[] equipment;
-    private final Item[] inventory;
+    private final ComposedItem[] equipment;
+    private final ComposedItem[] inventory;
     private final SkillInfo[] skills;
 
 }
