@@ -30,6 +30,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
+
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -70,6 +72,9 @@ import static net.runelite.api.widgets.WidgetID.QUEST_COMPLETED_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.THEATRE_OF_BLOOD_REWARD_GROUP_ID;
 import net.runelite.api.widgets.WidgetInfo;
 import static net.runelite.client.RuneLite.SCREENSHOT_DIR;
+
+import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.PlayerLootReceived;
@@ -162,6 +167,9 @@ public class ScapeCloudPlugin extends Plugin
 
 	@Inject
 	private Client client;
+
+	@Inject
+	private ClientThread clientThread;
 
 	@Inject
 	private ClientUI clientUi;
@@ -680,8 +688,14 @@ public class ScapeCloudPlugin extends Plugin
 		if (delta >= THROTTLE_AMOUNT) {
 			takeScreenshot("", null);
 			lastManualScreenshot = System.currentTimeMillis();
-		} else {
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "You are uploading images too quickly, please wait " + (THROTTLE_AMOUNT - delta) + "ms.", null);
+		} else if (client.getGameState().equals(GameState.LOGGED_IN)) {
+			clientThread.invokeLater(() -> {
+				String message = new ChatMessageBuilder()
+						.append(Color.RED, "You are uploading images too quickly, please wait " + (THROTTLE_AMOUNT - delta) + "ms.")
+						.build();
+
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, null);
+			});
 		}
 	}
 
