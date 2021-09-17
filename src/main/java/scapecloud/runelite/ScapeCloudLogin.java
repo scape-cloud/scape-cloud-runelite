@@ -52,14 +52,8 @@ public class ScapeCloudLogin {
 
     private JFrame frame;
 
-    private JLabel emailLabel;
-    private JLabel passLabel;
-
     private JTextField emailField;
     private JPasswordField passwordField;
-
-    private JButton createButton;
-    private JButton loginButton;
 
     private boolean initialized = false;
 
@@ -70,29 +64,29 @@ public class ScapeCloudLogin {
     }
 
     private void initialize() {
-        frame = new JFrame("ScapeCould Login");
+        frame = new JFrame("OSRSLog Login");
         frame.setSize(300, 300);
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.setIconImage(ImageUtil.loadImageResource(getClass(), "scapecloud_icon.png"));
 
-        emailLabel = new JLabel("Email:");
+        JLabel emailLabel = new JLabel("Email:");
         emailLabel.setBounds(20, 10, 75, 30);
 
         emailField = new JTextField();
         emailField.setBounds(20, 40, 250, 30);
 
-        passLabel = new JLabel("Password:");
+        JLabel passLabel = new JLabel("Password:");
         passLabel.setBounds(20, 75, 75, 30);
 
         passwordField = new JPasswordField();
         passwordField.setBounds(20, 105, 250, 30);
 
-        createButton = new JButton("Sign Up");
-        createButton.setBounds(75, 160, 150, 30);
+        JButton loginButton = new JButton("Log In");
+        loginButton.setBounds(75, 160, 150, 30);
 
-        loginButton = new JButton("Log In");
-        loginButton.setBounds(75, 210, 150, 30);
+        JButton createButton = new JButton("Sign Up");
+        createButton.setBounds(75, 210, 150, 30);
 
         createButton.addActionListener(this::create);
         loginButton.addActionListener(this::login);
@@ -102,8 +96,8 @@ public class ScapeCloudLogin {
         frame.getContentPane().add(emailField);
         frame.getContentPane().add(passLabel);
         frame.getContentPane().add(passwordField);
-        frame.getContentPane().add(createButton);
         frame.getContentPane().add(loginButton);
+        frame.getContentPane().add(createButton);
 
         initialized = true;
     }
