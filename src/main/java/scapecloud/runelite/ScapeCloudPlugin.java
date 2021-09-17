@@ -271,7 +271,7 @@ public class ScapeCloudPlugin extends Plugin
 		lastManualScreenshot = 0L;
 
 		if (config.email().length() > 0 && config.password().length() > 0) {
-			executor.submit(() -> api.authenticate(config.email(), config.password(), this::addAndRemoveButtons, (error) -> {}));
+			executor.submit(() -> api.authenticate(config.email(), config.password(), this::addAndRemoveButtons));
 		}
 	}
 

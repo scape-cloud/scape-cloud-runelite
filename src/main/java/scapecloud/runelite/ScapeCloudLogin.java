@@ -112,18 +112,15 @@ public class ScapeCloudLogin {
             String email = emailField.getText();
             String password = new String(passwordField.getPassword());
 
-            api.authenticate(email, password,
-                    () -> {
-                        manager.setConfiguration("scape-cloud", "email", email);
-                        manager.setConfiguration("scape-cloud", "password", password);
-                        JOptionPane.showMessageDialog(frame, "Login Successful", "ScapeCloud Login", JOptionPane.INFORMATION_MESSAGE);
-                        frame.setVisible(false);
-                        emailField.setText("");
-                        passwordField.setText("");
-                        plugin.addAndRemoveButtons();
-                    },
-                    (error) -> JOptionPane.showMessageDialog(frame, error.getError().getMessage(), "ScapeCloud Login", JOptionPane.ERROR_MESSAGE)
-            );
+            api.authenticate(email, password, () -> {
+                manager.setConfiguration("scape-cloud", "email", email);
+                manager.setConfiguration("scape-cloud", "password", password);
+                JOptionPane.showMessageDialog(frame, "Login Successful", "ScapeCloud Login", JOptionPane.INFORMATION_MESSAGE);
+                frame.setVisible(false);
+                emailField.setText("");
+                passwordField.setText("");
+                plugin.addAndRemoveButtons();
+            });
         }
     }
 
