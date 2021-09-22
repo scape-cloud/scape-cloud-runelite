@@ -26,7 +26,12 @@ package scapecloud.runelite;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.*;
+import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
+import net.runelite.api.GameState;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Player;
+import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
@@ -40,7 +45,17 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import scapecloud.runelite.api.*;
+import scapecloud.runelite.api.AuthError;
+import scapecloud.runelite.api.Authorization;
+import scapecloud.runelite.api.Credentials;
+import scapecloud.runelite.api.Image;
+import scapecloud.runelite.api.ItemInfo;
+import scapecloud.runelite.api.Link;
+import scapecloud.runelite.api.Metadata;
+import scapecloud.runelite.api.NearbyPlayer;
+import scapecloud.runelite.api.Refresh;
+import scapecloud.runelite.api.SkillInfo;
+import scapecloud.runelite.api.UploadError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -58,8 +73,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Singleton
@@ -74,7 +89,7 @@ class ScapeCloudAPI {
     private static final MediaType PNG = MediaType.parse("image/png");
     private static final Gson GSON = new Gson();
 
-    private static final Function<Player, OtherPlayer> PLAYER_MAPPER = p -> new OtherPlayer(p.getName(), p.isFriend(), p.isFriendsChatMember(), p.getTeam(), p.getCombatLevel());
+    private static final int REFRESH_OFFSET = (int) TimeUnit.MINUTES.toSeconds(5);
 
     @Inject
     private Client client;
@@ -123,7 +138,7 @@ class ScapeCloudAPI {
                 Authorization auth = GSON.fromJson(json, Authorization.class);
                 idToken.set(auth.getIdToken());
                 refreshToken.set(auth.getRefreshToken());
-                refreshTask = executor.schedule(this::reauthenticate, auth.getExpiresIn() - 300, TimeUnit.SECONDS);
+                refreshTask = executor.schedule(this::reauthenticate, auth.getExpiresIn() - REFRESH_OFFSET, TimeUnit.SECONDS);
                 success.run();
             } else {
                 AuthError error = GSON.fromJson(json, AuthError.class);
@@ -139,7 +154,7 @@ class ScapeCloudAPI {
     public void reauthenticate() {
         RequestBody body = new FormBody.Builder()
                 .add("grant_type", "refresh_token")
-                .add("refresh_token", refreshToken.get().substring(10))
+                .add("refresh_token", refreshToken.get())
                 .build();
 
         Request request = new Request.Builder()
@@ -153,7 +168,7 @@ class ScapeCloudAPI {
                 Refresh refresh = GSON.fromJson(json, Refresh.class);
                 idToken.set(refresh.getIdToken());
                 refreshToken.set(refresh.getRefreshToken());
-                refreshTask = executor.schedule(this::reauthenticate, refresh.getExpiresIn() - 300, TimeUnit.SECONDS);
+                refreshTask = executor.schedule(this::reauthenticate, refresh.getExpiresIn() - REFRESH_OFFSET, TimeUnit.SECONDS);
             } else {
                 AuthError error = GSON.fromJson(json, AuthError.class);
                 log.error("Error occurred while re-authenticating with OSRSLog, " + error.getError().getMessage());
@@ -223,80 +238,54 @@ class ScapeCloudAPI {
         }
     }
 
-    public SkillInfo[] getSkills(Client client) {
-        Skill[] skillValues = Skill.values();
-        int totalSkills = skillValues.length;
-        SkillInfo[] skills = new SkillInfo[totalSkills];
-        int[] boostedLevels = client.getBoostedSkillLevels();
-        int[] skillExp = client.getSkillExperiences();
-        int[] realSkillLevels = client.getRealSkillLevels();
-        for (int i = 0; i < totalSkills; i++) {
-            skills[i] = new SkillInfo(
-                    skillValues[i].getName(),
-                    boostedLevels[i],
-                    realSkillLevels[i],
-                    skillExp[i]
-            );
-        }
-
-        return skills;
-    }
-
-    public String createMetadata() {
+    private String createMetadata() {
         Player player = client.getLocalPlayer();
         if (player == null) return "";
 
+        Skill[] skillNames = Skill.values();
         List<Player> players = client.getPlayers();
-        WorldPoint point = player.getWorldLocation();
+        int[] boostedLevels = client.getBoostedSkillLevels();
+        int[] exp = client.getSkillExperiences();
+        int[] levels = client.getRealSkillLevels();
+
+        WorldPoint pos = player.getWorldLocation();
         String skullIcon = player.getSkullIcon() != null ? player.getSkullIcon().name() : "";
 
-        List<OtherPlayer> nearby = players.stream()
+        List<NearbyPlayer> nearby = players.stream()
                 .filter(p -> !p.equals(player))
-                .map(PLAYER_MAPPER)
+                .map(NearbyPlayer::new)
                 .collect(Collectors.toList());
 
         String eventType = "NOT_IMPLEMENTED";
 
-        SkillInfo[] skills = getSkills(client);
+        List<SkillInfo> skills = IntStream.range(0, skillNames.length)
+                .mapToObj(i -> new SkillInfo(skillNames[i].getName(), boostedLevels[i], levels[i], exp[i]))
+                .collect(Collectors.toList());
 
-        ComposedItem[] equipment = Arrays.stream(client.getItemContainer(InventoryID.EQUIPMENT).getItems())
-                .map(item -> {
-                    ItemComposition comp = client.getItemDefinition(item.getId());
-                    return toComposedItem(comp, item.getQuantity());
-                }).toArray(ComposedItem[]::new);
+        List<ItemInfo> equipment = Arrays.stream(client.getItemContainer(InventoryID.EQUIPMENT).getItems())
+                .map(item -> new ItemInfo(client.getItemDefinition(item.getId()), item.getQuantity()))
+                .collect(Collectors.toList());
 
-        ComposedItem[] inventory = Arrays.stream(client.getItemContainer(InventoryID.INVENTORY).getItems())
-                .map(item -> {
-                    ItemComposition comp = client.getItemDefinition(item.getId());
-                    return toComposedItem(comp, item.getQuantity());
-                }).toArray(ComposedItem[]::new);
+        List<ItemInfo> inventory = Arrays.stream(client.getItemContainer(InventoryID.INVENTORY).getItems())
+                .map(item -> new ItemInfo(client.getItemDefinition(item.getId()), item.getQuantity()))
+                .collect(Collectors.toList());
 
-        return GSON.toJson(
-                new Metadata(
-                        player.getName(),
-                        client.getAccountType().name(),
-                        skullIcon,
-                        eventType,
-                        nearby,
-                        client.getWorldType(),
-                        new int[] { point.getX(), point.getY(), point.getPlane() },
-                        player.getCombatLevel(),
-                        client.getWorld(),
-                        client.getTotalLevel(),
-                        client.getAccountType().isIronman(),
-                        equipment,
-                        inventory,
-                        skills
-                )
-        );
-    }
-
-    ComposedItem toComposedItem(ItemComposition itemComposition, int quantity) {
-        return new ComposedItem(
-                itemComposition.getId(),
-                quantity,
-                itemComposition.getName()
-        );
+        return GSON.toJson(new Metadata(
+                player.getName(),
+                client.getAccountType().name(),
+                skullIcon,
+                eventType,
+                nearby,
+                client.getWorldType(),
+                Arrays.asList(pos.getX(), pos.getY(), pos.getPlane()),
+                player.getCombatLevel(),
+                client.getWorld(),
+                client.getTotalLevel(),
+                client.getAccountType().isIronman(),
+                equipment,
+                inventory,
+                skills
+        ));
     }
 
 }

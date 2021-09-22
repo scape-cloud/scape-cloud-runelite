@@ -28,6 +28,7 @@ package scapecloud.runelite;
 
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.callback.ClientThread;
 import scapecloud.runelite.api.Image;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -56,16 +57,17 @@ public class ScapeCloudImageCapture {
 
     private static final DateFormat TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 
-    private final Client client;
-    private final Notifier notifier;
-    private final ScapeCloudAPI api;
+    @Inject
+    private Client client;
 
     @Inject
-    private ScapeCloudImageCapture(Client client, Notifier notifier, ScapeCloudAPI api) {
-        this.client = client;
-        this.notifier = notifier;
-        this.api = api;
-    }
+    private ClientThread clientThread;
+
+    @Inject
+    private Notifier notifier;
+
+    @Inject
+    private ScapeCloudAPI api;
 
     /**
      * Saves a screenshot of the client window to the screenshot folder as a PNG,
@@ -116,8 +118,9 @@ public class ScapeCloudImageCapture {
             ImageIO.write(screenshot, "PNG", screenshotFile);
 
             if (api.isAuthenticated()) {
+                final String name = screenshotFile.getName();
                 byte[] bytes = Files.readAllBytes(screenshotFile.toPath());
-                api.upload(new Image(screenshotFile.getName(), bytes), notify);
+                clientThread.invokeLater(() -> api.upload(new Image(name, bytes), notify));
             } else if (notify) {
                 notifier.notify("A screenshot was saved to " + screenshotFile, TrayIcon.MessageType.INFO);
             }

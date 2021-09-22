@@ -25,14 +25,25 @@
 package scapecloud.runelite.api;
 
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import net.runelite.api.Player;
 
 @Data
-public class OtherPlayer {
+@RequiredArgsConstructor
+public class NearbyPlayer {
 
     private final String playerName;
     private final boolean isFriend;
     private final boolean isFriendsChat;
     private final int team;
     private final int combatLevel;
+
+    public NearbyPlayer(Player player) {
+        this.playerName = player.getName();
+        this.isFriend = player.isFriend();
+        this.isFriendsChat = player.isFriendsChatMember();
+        this.team = player.getTeam();
+        this.combatLevel = player.getCombatLevel();
+    }
 
 }
