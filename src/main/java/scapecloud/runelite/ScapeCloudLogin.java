@@ -126,7 +126,7 @@ public class ScapeCloudLogin {
 
     public void logout() {
         if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(frame,
-                "Are you sure you want to log out from ScapeCloud?",
+                "Are you sure you want to log out from OSRSLog?",
                 "OSRSLog Logout", JOptionPane.YES_NO_OPTION)
         ) {
             api.logout();

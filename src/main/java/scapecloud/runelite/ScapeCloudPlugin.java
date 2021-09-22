@@ -37,6 +37,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
@@ -315,11 +316,15 @@ public class ScapeCloudPlugin extends Plugin
 
 		shouldTakeScreenshot = false;
 		String screenshotSubDir = null;
+		ArrayList<String> events = new ArrayList<String>();
 
 		String fileName = null;
 		if (client.getWidget(WidgetInfo.LEVEL_UP_LEVEL) != null)
 		{
-			fileName = parseLevelUpWidget(WidgetInfo.LEVEL_UP_LEVEL);
+			Matcher levelMatcher = parseLevelUpWidget(WidgetInfo.LEVEL_UP_LEVEL);
+			String skillName = levelMatcher.group(1);
+			String skillLevel = levelMatcher.group(2);
+			fileName = skillName + "(" + skillLevel + ")";
 			screenshotSubDir = "Levels";
 		}
 		else if (client.getWidget(WidgetInfo.DIALOG_SPRITE_TEXT) != null)
@@ -331,18 +336,44 @@ public class ScapeCloudPlugin extends Plugin
 				{
 					fileName = parseBAHighGambleWidget(text);
 					screenshotSubDir = "BA High Gambles";
+					events.add("barb_assault");
+					events.add("barbarian_assault");
+					events.add("ba_gamble");
 				}
 			}
 			else if (config.screenshotLevels()) {
-				fileName = parseLevelUpWidget(WidgetInfo.DIALOG_SPRITE_TEXT);
+				Matcher levelMatcher = parseLevelUpWidget(WidgetInfo.LEVEL_UP_LEVEL);
+				String skillName = levelMatcher.group(1);
+				String skillLevel = levelMatcher.group(2);
+				fileName = skillName + "(" + skillLevel + ")";
 				screenshotSubDir = "Levels";
+				events.add("level_up");
+				events.add("ding");
+				events.add(skillName);
+				if (Integer.parseInt(skillLevel) == 99) {
+					events.add("level99");
+				}
 			}
 		}
 		else if (client.getWidget(WidgetInfo.QUEST_COMPLETED_NAME_TEXT) != null)
 		{
 			String text = client.getWidget(WidgetInfo.QUEST_COMPLETED_NAME_TEXT).getText();
-			fileName = parseQuestCompletedWidget(text);
+			Matcher m = parseQuestCompletedWidget(text);
+			String quest = m.group("quest");
+
+			fileName = getQuestFileName(m);
 			screenshotSubDir = "Quests";
+
+			String[] questNameParts = quest.split("-");
+
+			String questName = String.join("_", questNameParts);
+
+			events.add("quest");
+			events.add("quest_" + questName
+						.replaceAll("[\\s/]","_")
+						.replaceAll("['\\.!:]", "")
+						.replaceAll("&", "and")
+			);
 		}
 
 		if (fileName != null)
@@ -707,7 +738,7 @@ public class ScapeCloudPlugin extends Plugin
 	 *                     with the format "Your Skill (level is/are) now 99."
 	 * @return Shortened string in the format "Skill(99)"
 	 */
-	String parseLevelUpWidget(WidgetInfo levelUpLevel)
+	Matcher parseLevelUpWidget(WidgetInfo levelUpLevel)
 	{
 		Widget levelChild = client.getWidget(levelUpLevel);
 		if (levelChild == null)
@@ -723,7 +754,7 @@ public class ScapeCloudPlugin extends Plugin
 
 		String skillName = m.group(1);
 		String skillLevel = m.group(2);
-		return skillName + "(" + skillLevel + ")";
+		return m; // skillName + "(" + skillLevel + ")";
 	}
 
 	/**
@@ -733,21 +764,24 @@ public class ScapeCloudPlugin extends Plugin
 	 * @return Shortened string in the format "Quest(The Corsair Curse)"
 	 */
 	@VisibleForTesting
-	static String parseQuestCompletedWidget(final String text)
+	static Matcher parseQuestCompletedWidget(final String text)
 	{
 		// "You have completed The Corsair Curse!"
 		final Matcher questMatch1 = QUEST_PATTERN_1.matcher(text);
 		// "'One Small Favour' completed!"
 		final Matcher questMatch2 = QUEST_PATTERN_2.matcher(text);
 		final Matcher questMatchFinal = questMatch1.matches() ? questMatch1 : questMatch2;
-		if (!questMatchFinal.matches())
+
+		return questMatchFinal;
+	}
+
+	String getQuestFileName(Matcher m) {
+		String quest = m.group("quest");
+		String verb = m.group("verb") != null ? m.group("verb") : "";
+		if (!m.matches())
 		{
 			return "Quest(quest not found)";
 		}
-
-		String quest = questMatchFinal.group("quest");
-		String verb = questMatchFinal.group("verb") != null ? questMatchFinal.group("verb") : "";
-
 		if (verb.contains("kind of"))
 		{
 			quest += " partial completion";

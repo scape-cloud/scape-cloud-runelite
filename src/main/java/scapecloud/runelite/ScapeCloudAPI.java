@@ -26,10 +26,7 @@ package scapecloud.runelite;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.Player;
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
@@ -43,15 +40,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import scapecloud.runelite.api.AuthError;
-import scapecloud.runelite.api.Authorization;
-import scapecloud.runelite.api.Credentials;
-import scapecloud.runelite.api.Image;
-import scapecloud.runelite.api.Link;
-import scapecloud.runelite.api.Metadata;
-import scapecloud.runelite.api.OtherPlayer;
-import scapecloud.runelite.api.Refresh;
-import scapecloud.runelite.api.UploadError;
+import scapecloud.runelite.api.*;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -63,6 +52,7 @@ import java.awt.TrayIcon;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -77,6 +67,7 @@ class ScapeCloudAPI {
 
     private static final String FIREBASE_AUTH = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
     private static final String FIREBASE_REFRESH = "https://securetoken.googleapis.com/v1/token?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
+
     private static final String OSRSLOG_UPLOAD = "https://www.osrslog.com/api/upload";
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
@@ -232,6 +223,25 @@ class ScapeCloudAPI {
         }
     }
 
+    public SkillInfo[] getSkills(Client client) {
+        Skill[] skillValues = Skill.values();
+        int totalSkills = skillValues.length;
+        SkillInfo[] skills = new SkillInfo[totalSkills];
+        int[] boostedLevels = client.getBoostedSkillLevels();
+        int[] skillExp = client.getSkillExperiences();
+        int[] realSkillLevels = client.getRealSkillLevels();
+        for (int i = 0; i < totalSkills; i++) {
+            skills[i] = new SkillInfo(
+                    skillValues[i].getName(),
+                    boostedLevels[i],
+                    realSkillLevels[i],
+                    skillExp[i]
+            );
+        }
+
+        return skills;
+    }
+
     public String createMetadata() {
         Player player = client.getLocalPlayer();
         if (player == null) return "";
@@ -245,8 +255,21 @@ class ScapeCloudAPI {
                 .map(PLAYER_MAPPER)
                 .collect(Collectors.toList());
 
-
         String eventType = "NOT_IMPLEMENTED";
+
+        SkillInfo[] skills = getSkills(client);
+
+        ComposedItem[] equipment = Arrays.stream(client.getItemContainer(InventoryID.EQUIPMENT).getItems())
+                .map(item -> {
+                    ItemComposition comp = client.getItemDefinition(item.getId());
+                    return toComposedItem(comp, item.getQuantity());
+                }).toArray(ComposedItem[]::new);
+
+        ComposedItem[] inventory = Arrays.stream(client.getItemContainer(InventoryID.INVENTORY).getItems())
+                .map(item -> {
+                    ItemComposition comp = client.getItemDefinition(item.getId());
+                    return toComposedItem(comp, item.getQuantity());
+                }).toArray(ComposedItem[]::new);
 
         return GSON.toJson(
                 new Metadata(
@@ -260,8 +283,19 @@ class ScapeCloudAPI {
                         player.getCombatLevel(),
                         client.getWorld(),
                         client.getTotalLevel(),
-                        client.getAccountType().isIronman()
+                        client.getAccountType().isIronman(),
+                        equipment,
+                        inventory,
+                        skills
                 )
+        );
+    }
+
+    ComposedItem toComposedItem(ItemComposition itemComposition, int quantity) {
+        return new ComposedItem(
+                itemComposition.getId(),
+                quantity,
+                itemComposition.getName()
         );
     }
 
