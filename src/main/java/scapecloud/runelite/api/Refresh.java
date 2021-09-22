@@ -24,16 +24,28 @@
  */
 package scapecloud.runelite.api;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
 public class Refresh {
 
+    @SerializedName("expires_in")
     private final int expiresIn;
+
+    @SerializedName("token_type")
     private final String tokenType;
+
+    @SerializedName("refresh_token")
     private final String refreshToken;
+
+    @SerializedName("id_token")
     private final String idToken;
+
+    @SerializedName("user_id")
     private final String userId;
+
+    @SerializedName("project_id")
     private final String projectId;
 
 }

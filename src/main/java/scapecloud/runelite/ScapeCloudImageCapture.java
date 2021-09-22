@@ -47,7 +47,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashMap;
 
 import static net.runelite.client.RuneLite.SCREENSHOT_DIR;
 
