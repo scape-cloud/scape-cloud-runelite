@@ -26,12 +26,7 @@ package scapecloud.runelite;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.InventoryID;
-import net.runelite.api.Player;
-import net.runelite.api.Skill;
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
@@ -67,6 +62,7 @@ import java.awt.TrayIcon;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -262,13 +258,21 @@ class ScapeCloudAPI {
                 .mapToObj(i -> new SkillInfo(skillNames[i].getName(), boostedLevels[i], levels[i], exp[i]))
                 .collect(Collectors.toList());
 
-        List<ItemInfo> equipment = Arrays.stream(client.getItemContainer(InventoryID.EQUIPMENT).getItems())
+        List<ItemInfo> equipment = new ArrayList<>();
+        ItemContainer equipmentContainer = client.getItemContainer(InventoryID.EQUIPMENT);
+        if (equipmentContainer != null) {
+                Arrays.stream(equipmentContainer.getItems())
                 .map(item -> new ItemInfo(client.getItemDefinition(item.getId()), item.getQuantity()))
-                .collect(Collectors.toList());
+                .forEachOrdered(equipment::add);
+        }
 
-        List<ItemInfo> inventory = Arrays.stream(client.getItemContainer(InventoryID.INVENTORY).getItems())
-                .map(item -> new ItemInfo(client.getItemDefinition(item.getId()), item.getQuantity()))
-                .collect(Collectors.toList());
+        List<ItemInfo> inventory = new ArrayList<>();
+        ItemContainer inventoryContainer = client.getItemContainer(InventoryID.EQUIPMENT);
+        if (inventoryContainer != null) {
+            Arrays.stream(inventoryContainer.getItems())
+                    .map(item -> new ItemInfo(client.getItemDefinition(item.getId()), item.getQuantity()))
+                    .forEachOrdered(inventory::add);
+        }
 
         return GSON.toJson(new Metadata(
                 player.getName(),

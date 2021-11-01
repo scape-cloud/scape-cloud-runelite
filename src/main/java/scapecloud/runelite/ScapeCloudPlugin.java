@@ -322,9 +322,11 @@ public class ScapeCloudPlugin extends Plugin
 		if (client.getWidget(WidgetInfo.LEVEL_UP_LEVEL) != null)
 		{
 			Matcher levelMatcher = parseLevelUpWidget(WidgetInfo.LEVEL_UP_LEVEL);
-			String skillName = levelMatcher.group(1);
-			String skillLevel = levelMatcher.group(2);
-			fileName = skillName + "(" + skillLevel + ")";
+			if (levelMatcher != null) {
+				String skillName = levelMatcher.group(1);
+				String skillLevel = levelMatcher.group(2);
+				fileName = skillName + "(" + skillLevel + ")";
+			}
 			screenshotSubDir = "Levels";
 		}
 		else if (client.getWidget(WidgetInfo.DIALOG_SPRITE_TEXT) != null)
@@ -343,15 +345,17 @@ public class ScapeCloudPlugin extends Plugin
 			}
 			else if (config.screenshotLevels()) {
 				Matcher levelMatcher = parseLevelUpWidget(WidgetInfo.LEVEL_UP_LEVEL);
-				String skillName = levelMatcher.group(1);
-				String skillLevel = levelMatcher.group(2);
-				fileName = skillName + "(" + skillLevel + ")";
-				screenshotSubDir = "Levels";
-				events.add("level_up");
-				events.add("ding");
-				events.add(skillName);
-				if (Integer.parseInt(skillLevel) == 99) {
-					events.add("level99");
+				if (levelMatcher != null) {
+					String skillName = levelMatcher.group(1);
+					String skillLevel = levelMatcher.group(2);
+					fileName = skillName + "(" + skillLevel + ")";
+					screenshotSubDir = "Levels";
+					events.add("level_up");
+					events.add("ding");
+					events.add(skillName);
+					if (Integer.parseInt(skillLevel) == 99) {
+						events.add("level99");
+					}
 				}
 			}
 		}
@@ -752,8 +756,6 @@ public class ScapeCloudPlugin extends Plugin
 			return null;
 		}
 
-		String skillName = m.group(1);
-		String skillLevel = m.group(2);
 		return m; // skillName + "(" + skillLevel + ")";
 	}
 
