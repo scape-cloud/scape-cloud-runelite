@@ -344,7 +344,7 @@ public class ScapeCloudPlugin extends Plugin
 				}
 			}
 			else if (config.screenshotLevels()) {
-				Matcher levelMatcher = parseLevelUpWidget(WidgetInfo.LEVEL_UP_LEVEL);
+				Matcher levelMatcher = parseLevelUpWidget(WidgetInfo.DIALOG_SPRITE_TEXT);
 				if (levelMatcher != null) {
 					String skillName = levelMatcher.group(1);
 					String skillLevel = levelMatcher.group(2);
