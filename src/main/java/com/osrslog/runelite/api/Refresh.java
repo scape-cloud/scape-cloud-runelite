@@ -22,14 +22,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite.api;
+package com.osrslog.runelite.api;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
-public class Image {
+public class Refresh {
 
-    private final String name;
-    private final byte[] file;
+    @SerializedName("expires_in")
+    private final int expiresIn;
+
+    @SerializedName("token_type")
+    private final String tokenType;
+
+    @SerializedName("refresh_token")
+    private final String refreshToken;
+
+    @SerializedName("id_token")
+    private final String idToken;
+
+    @SerializedName("user_id")
+    private final String userId;
+
+    @SerializedName("project_id")
+    private final String projectId;
 
 }

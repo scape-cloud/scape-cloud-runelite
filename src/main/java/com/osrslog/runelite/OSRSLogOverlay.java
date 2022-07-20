@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite;
+package com.osrslog.runelite;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -47,19 +47,19 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
 
-class ScapeCloudOverlay extends Overlay
+class OSRSLogOverlay extends Overlay
 {
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM. dd, yyyy");
     private static final int REPORT_BUTTON_X_OFFSET = 437;
 
     private final Client client;
     private final DrawManager drawManager;
-    private final ScapeCloudPlugin plugin;
+    private final OSRSLogPlugin plugin;
 
     private final Queue<Consumer<Image>> consumers = new ConcurrentLinkedQueue<>();
 
     @Inject
-    private ScapeCloudOverlay(Client client, DrawManager drawManager, ScapeCloudPlugin plugin)
+    private OSRSLogOverlay(Client client, DrawManager drawManager, OSRSLogPlugin plugin)
     {
         setPosition(OverlayPosition.DYNAMIC);
         setPriority(OverlayPriority.HIGH);

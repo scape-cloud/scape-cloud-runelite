@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite;
+package com.osrslog.runelite;
 
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.util.ImageUtil;
@@ -34,26 +34,24 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import java.awt.event.ActionEvent;
 
 @Singleton
-public class ScapeCloudLogin {
+public class OSRSLogLogin {
 
     @Inject
     private ConfigManager manager;
 
     @Inject
-    private ScapeCloudAPI api;
+    private OSRSLogAPI api;
 
     @Inject
-    private ScapeCloudPlugin plugin;
+    private OSRSLogPlugin plugin;
 
     private JFrame frame;
 
-    private JTextField emailField;
-    private JPasswordField passwordField;
+    private JTextField uploadKeyField;
 
     private boolean initialized = false;
 
@@ -70,17 +68,11 @@ public class ScapeCloudLogin {
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.setIconImage(ImageUtil.loadImageResource(getClass(), "scapecloud_icon.png"));
 
-        JLabel emailLabel = new JLabel("Email:");
-        emailLabel.setBounds(20, 10, 75, 30);
+        JLabel uploadKeyLabel = new JLabel("Upload Key:");
+        uploadKeyLabel.setBounds(20, 10, 75, 30);
 
-        emailField = new JTextField();
-        emailField.setBounds(20, 40, 250, 30);
-
-        JLabel passLabel = new JLabel("Password:");
-        passLabel.setBounds(20, 75, 75, 30);
-
-        passwordField = new JPasswordField();
-        passwordField.setBounds(20, 105, 250, 30);
+        uploadKeyField = new JTextField();
+        uploadKeyField.setBounds(20, 40, 250, 30);
 
         JButton loginButton = new JButton("Log In");
         loginButton.setBounds(75, 160, 150, 30);
@@ -92,10 +84,8 @@ public class ScapeCloudLogin {
         loginButton.addActionListener(this::login);
 
         frame.getContentPane().setLayout(null);
-        frame.getContentPane().add(emailLabel);
-        frame.getContentPane().add(emailField);
-        frame.getContentPane().add(passLabel);
-        frame.getContentPane().add(passwordField);
+        frame.getContentPane().add(uploadKeyLabel);
+        frame.getContentPane().add(uploadKeyField);
         frame.getContentPane().add(loginButton);
         frame.getContentPane().add(createButton);
 
@@ -108,19 +98,15 @@ public class ScapeCloudLogin {
     }
 
     private void login(ActionEvent e) {
-        if (emailField.getText().length() > 0 && passwordField.getPassword().length > 0) {
-            String email = emailField.getText();
-            String password = new String(passwordField.getPassword());
+        if (uploadKeyField.getText().length() > 0) {
+            String uploadKey = uploadKeyField.getText();
 
-            api.authenticate(email, password, () -> {
-                manager.setConfiguration("scape-cloud", "email", email);
-                manager.setConfiguration("scape-cloud", "password", password);
-                JOptionPane.showMessageDialog(frame, "Login Successful", "ScapeCloud Login", JOptionPane.INFORMATION_MESSAGE);
-                frame.setVisible(false);
-                emailField.setText("");
-                passwordField.setText("");
-                plugin.addAndRemoveButtons();
-            });
+            api.authenticate(uploadKey);
+            manager.setConfiguration("osrslog", "uploadKey", uploadKey);
+            JOptionPane.showMessageDialog(frame, "Login Successful", "OSRSLog Login", JOptionPane.INFORMATION_MESSAGE);
+            frame.setVisible(false);
+            uploadKeyField.setText("");
+            plugin.addAndRemoveButtons();
         }
     }
 

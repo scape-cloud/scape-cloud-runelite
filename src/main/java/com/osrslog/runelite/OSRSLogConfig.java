@@ -23,17 +23,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite;
+package com.osrslog.runelite;
 
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Keybind;
-import net.runelite.client.util.ImageUploadStyle;
 
 @ConfigGroup("scape-cloud")
-public interface ScapeCloudConfig extends Config
+public interface OSRSLogConfig extends Config
 {
 
     @ConfigItem(
@@ -268,26 +267,13 @@ public interface ScapeCloudConfig extends Config
     }
 
     @ConfigItem(
-            keyName = "email",
-            name = "Email",
-            description = "Email for Scape Cloud Service",
+            keyName = "uploadKey",
+            name = "Upload Key",
+            description = "Upload Key for OSRSLog Service",
             hidden = true,
             position = 21
     )
-    default String email()
-    {
-        return "";
-    }
-
-    @ConfigItem(
-            keyName = "password",
-            name = "Password",
-            description = "Password for Scape Cloud Service",
-            secret = true,
-            hidden = true,
-            position = 22
-    )
-    default String password()
+    default String uploadKey()
     {
         return "";
     }

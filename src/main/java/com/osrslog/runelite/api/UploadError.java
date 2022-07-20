@@ -22,15 +22,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite.api;
+package com.osrslog.runelite.api;
 
 import lombok.Data;
 
 @Data
-public class Credentials {
+public class UploadError {
 
-    private final String email;
-    private final String password;
-    private final boolean returnSecureToken = true;
+    private final String status;
+    private final String message;
 
 }

@@ -24,12 +24,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite;
+package com.osrslog.runelite;
 
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
-import scapecloud.runelite.api.Image;
+import com.osrslog.runelite.api.Image;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.WorldType;
@@ -53,7 +53,7 @@ import static net.runelite.client.RuneLite.SCREENSHOT_DIR;
 
 @Slf4j
 @Singleton
-public class ScapeCloudImageCapture {
+public class OSRSLogImageCapture {
 
     private static final DateFormat TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 
@@ -67,7 +67,7 @@ public class ScapeCloudImageCapture {
     private Notifier notifier;
 
     @Inject
-    private ScapeCloudAPI api;
+    private OSRSLogAPI api;
 
     /**
      * Saves a screenshot of the client window to the screenshot folder as a PNG,

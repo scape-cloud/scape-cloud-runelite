@@ -7,7 +7,7 @@ repositories {
 	maven { url = 'https://repo.runelite.net' }
 }
 
-def runeLiteVersion = '1.8.4'
+def runeLiteVersion = '1.8.27.1'
 
 dependencies {
 	compileOnly group: 'net.runelite', name:'client', version: runeLiteVersion
@@ -19,7 +19,7 @@ dependencies {
 	testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
 }
 
-group = 'scapecloud.runelite'
+group = 'com.osrslog.runelite'
 version = '1.0-SNAPSHOT'
 sourceCompatibility = '1.8'
 

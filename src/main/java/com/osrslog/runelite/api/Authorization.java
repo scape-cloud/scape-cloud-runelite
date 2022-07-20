@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, ScapeCloud
+ * Copyright (c) 2021, OSRSLog
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,30 +22,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite.api;
+package com.osrslog.runelite.api;
 
 import lombok.Data;
-import net.runelite.api.WorldType;
-
-import java.util.List;
-import java.util.Set;
 
 @Data
-public class Metadata {
+public class Authorization {
 
-    private final String playerName;
-    private final String accountType;
-    private final String skullIcon;
-    private final String eventType;
-    private final List<NearbyPlayer> nearbyPlayers;
-    private final Set<WorldType> worldType;
-    private final List<Integer> location;
-    private final int combatLevel;
-    private final int world;
-    private final int totalLevel;
-    private final boolean isIronman;
-    private final List<ItemInfo> equipment;
-    private final List<ItemInfo> inventory;
-    private final List<SkillInfo> skills;
+    private final String kind;
+    private final String localId;
+    private final String email;
+    private final String displayName;
+    private final String idToken;
+    private final boolean registered;
+    private final String refreshToken;
+    private final int expiresIn;
 
 }

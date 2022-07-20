@@ -22,20 +22,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite.api;
+package com.osrslog.runelite.api;
 
 import lombok.Data;
 
 @Data
-public class Authorization {
+public class Reason {
 
-    private final String kind;
-    private final String localId;
-    private final String email;
-    private final String displayName;
-    private final String idToken;
-    private final boolean registered;
-    private final String refreshToken;
-    private final int expiresIn;
+    private final String domain;
+    private final String reason;
+    private final String message;
 
 }

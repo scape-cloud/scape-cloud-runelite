@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, OSRSLog
+ * Copyright (c) 2021, ScapeCloud
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,30 +22,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite.api;
+package com.osrslog.runelite.api;
 
-import com.google.gson.annotations.SerializedName;
 import lombok.Data;
+import net.runelite.api.WorldType;
+
+import java.util.List;
+import java.util.Set;
 
 @Data
-public class Refresh {
+public class Metadata {
 
-    @SerializedName("expires_in")
-    private final int expiresIn;
-
-    @SerializedName("token_type")
-    private final String tokenType;
-
-    @SerializedName("refresh_token")
-    private final String refreshToken;
-
-    @SerializedName("id_token")
-    private final String idToken;
-
-    @SerializedName("user_id")
-    private final String userId;
-
-    @SerializedName("project_id")
-    private final String projectId;
+    private final String playerName;
+    private final String accountType;
+    private final String skullIcon;
+    private final String eventType;
+    private final List<NearbyPlayer> nearbyPlayers;
+    private final Set<WorldType> worldType;
+    private final List<Integer> location;
+    private final int combatLevel;
+    private final int world;
+    private final int totalLevel;
+    private final boolean isIronman;
+    private final List<ItemInfo> equipment;
+    private final List<ItemInfo> inventory;
+    private final List<SkillInfo> skills;
 
 }

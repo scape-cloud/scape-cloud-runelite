@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite;
+package com.osrslog.runelite;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -33,24 +33,19 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import scapecloud.runelite.api.AuthError;
-import scapecloud.runelite.api.Authorization;
-import scapecloud.runelite.api.Credentials;
-import scapecloud.runelite.api.Image;
-import scapecloud.runelite.api.ItemInfo;
-import scapecloud.runelite.api.Link;
-import scapecloud.runelite.api.Metadata;
-import scapecloud.runelite.api.NearbyPlayer;
-import scapecloud.runelite.api.Refresh;
-import scapecloud.runelite.api.SkillInfo;
-import scapecloud.runelite.api.UploadError;
+import com.osrslog.runelite.api.Image;
+import com.osrslog.runelite.api.ItemInfo;
+import com.osrslog.runelite.api.Link;
+import com.osrslog.runelite.api.Metadata;
+import com.osrslog.runelite.api.NearbyPlayer;
+import com.osrslog.runelite.api.SkillInfo;
+import com.osrslog.runelite.api.UploadError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -66,26 +61,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
 @Singleton
-class ScapeCloudAPI {
+class OSRSLogAPI {
 
-    private static final String FIREBASE_AUTH = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
-    private static final String FIREBASE_REFRESH = "https://securetoken.googleapis.com/v1/token?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
+//    private static final String AUTH_ENDPOINT = "http://localhost:3000/api/runelite"
+//    private static final String FIREBASE_AUTH = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
+//    private static final String FIREBASE_REFRESH = "https://securetoken.googleapis.com/v1/token?key=AIzaSyD64AKzvmmEiFkn-4U5X54D24He813qCjk";
 
-    private static final String OSRSLOG_UPLOAD = "https://www.osrslog.com/api/upload";
+    // https://www.osrslog.com/api/upload
+    private static final String OSRSLOG_UPLOAD = "http://localhost:3000/api/runelite/upload-media";
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType PNG = MediaType.parse("image/png");
     private static final Gson GSON = new Gson();
 
-    private static final int REFRESH_OFFSET = (int) TimeUnit.MINUTES.toSeconds(5);
+//    private static final int REFRESH_OFFSET = (int) TimeUnit.MINUTES.toSeconds(5);
 
     @Inject
     private Client client;
@@ -103,79 +98,20 @@ class ScapeCloudAPI {
     private ScheduledExecutorService executor;
 
     @Inject
-    private ScapeCloudPlugin plugin;
+    private OSRSLogPlugin plugin;
 
-    private final AtomicReference<String> idToken = new AtomicReference<>();
-    private final AtomicReference<String> refreshToken = new AtomicReference<>();
-    private ScheduledFuture<?> refreshTask;
+    private final AtomicReference<String> uploadKey = new AtomicReference<>();
 
     public boolean isAuthenticated() {
-        return idToken.get() != null;
+        return uploadKey.get() != null;
     }
 
     public void logout() {
-        idToken.set(null);
-        refreshToken.set(null);
-        if (refreshTask != null) {
-            refreshTask.cancel(false);
-            refreshTask = null;
-        }
+        uploadKey.set(null);
     }
 
-    public void authenticate(String email, String password, Runnable success) {
-        Request request = new Request.Builder()
-                .url(FIREBASE_AUTH)
-                .post(RequestBody.create(JSON, GSON.toJson(new Credentials(email, password))))
-                .build();
-
-        try (Response response = okHttpClient.newCall(request).execute()) {
-            String json = response.body().string();
-            if (response.isSuccessful()) {
-                Authorization auth = GSON.fromJson(json, Authorization.class);
-                idToken.set(auth.getIdToken());
-                refreshToken.set(auth.getRefreshToken());
-                refreshTask = executor.schedule(this::reauthenticate, auth.getExpiresIn() - REFRESH_OFFSET, TimeUnit.SECONDS);
-                success.run();
-            } else {
-                AuthError error = GSON.fromJson(json, AuthError.class);
-                log.error("Error occurred while authenticating with OSRSLog. " + error.getError().getMessage());
-                message("OSRSLog Auth", "Error occurred while authenticating to OSRSLog.");
-            }
-        } catch (IOException e) {
-            log.error("Exception occurred while authenticating with OSRSLog.", e);
-            message("OSRSLog Auth", "Exception occurred while authenticating to OSRSLog.");
-        }
-    }
-
-    public void reauthenticate() {
-        RequestBody body = new FormBody.Builder()
-                .add("grant_type", "refresh_token")
-                .add("refresh_token", refreshToken.get())
-                .build();
-
-        Request request = new Request.Builder()
-                .url(FIREBASE_REFRESH)
-                .post(body)
-                .build();
-
-        try (Response response = okHttpClient.newCall(request).execute()) {
-            String json = response.body().string();
-            if (response.isSuccessful()) {
-                Refresh refresh = GSON.fromJson(json, Refresh.class);
-                idToken.set(refresh.getIdToken());
-                refreshToken.set(refresh.getRefreshToken());
-                refreshTask = executor.schedule(this::reauthenticate, refresh.getExpiresIn() - REFRESH_OFFSET, TimeUnit.SECONDS);
-            } else {
-                AuthError error = GSON.fromJson(json, AuthError.class);
-                log.error("Error occurred while re-authenticating with OSRSLog, " + error.getError().getMessage());
-                message("OSRSLog Re-auth", "Error occurred while re-authenticating to OSRSLog.");
-                logout();
-                plugin.addAndRemoveButtons();
-            }
-        } catch (IOException e) {
-            log.error("Exception occurred while re-authenticating with OSRSLog.", e);
-            message("OSRSLog Re-auth", "Exception occurred while re-authenticating to OSRSLog.");
-        }
+    public void authenticate(String uploadKey) {
+        this.uploadKey.set(uploadKey);
     }
 
     public void upload(Image image, boolean notify) {
@@ -187,7 +123,7 @@ class ScapeCloudAPI {
 
         Request request = new Request.Builder()
                 .url(OSRSLOG_UPLOAD)
-                .header("Authorization", "Bearer " + idToken.get())
+                .header("X-Upload-Key", "" + uploadKey.get())
                 .post(body)
                 .build();
 
@@ -223,7 +159,7 @@ class ScapeCloudAPI {
 
     private void message(String title, String message) {
         // null id means this was called from logging in
-        if (idToken.get() == null || !client.getGameState().equals(GameState.LOGGED_IN)) {
+        if (uploadKey.get() == null || !client.getGameState().equals(GameState.LOGGED_IN)) {
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
             });

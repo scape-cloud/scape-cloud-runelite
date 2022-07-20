@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package scapecloud.runelite;
+package com.osrslog.runelite;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -99,7 +99,7 @@ import net.runelite.client.util.Text;
 		tags = {"external", "images", "scapecloud", "integration", "notifications"}
 )
 @Slf4j
-public class ScapeCloudPlugin extends Plugin
+public class OSRSLogPlugin extends Plugin
 {
 	private static final String COLLECTION_LOG_TEXT = "New item added to your collection log: ";
 	private static final String CHEST_LOOTED_MESSAGE = "You find some treasure in the chest!";
@@ -158,13 +158,13 @@ public class ScapeCloudPlugin extends Plugin
 	private boolean shouldTakeScreenshot;
 
 	@Inject
-	private ScapeCloudConfig config;
+	private OSRSLogConfig config;
 
 	@Inject
 	private OverlayManager overlayManager;
 
 	@Inject
-	private ScapeCloudOverlay screenshotOverlay;
+	private OSRSLogOverlay screenshotOverlay;
 
 	@Inject
 	private Client client;
@@ -185,13 +185,13 @@ public class ScapeCloudPlugin extends Plugin
 	private ScheduledExecutorService executor;
 
 	@Inject
-	private ScapeCloudAPI api;
+	private OSRSLogAPI api;
 
 	@Inject
-	private ScapeCloudImageCapture imageCapture;
+	private OSRSLogImageCapture imageCapture;
 
 	@Inject
-	private ScapeCloudLogin login;
+	private OSRSLogLogin login;
 
 	@Inject
 	private KeyManager keyManager;
@@ -220,9 +220,9 @@ public class ScapeCloudPlugin extends Plugin
 	};
 
 	@Provides
-	ScapeCloudConfig getConfig(ConfigManager configManager)
+	OSRSLogConfig getConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(ScapeCloudConfig.class);
+		return configManager.getConfig(OSRSLogConfig.class);
 	}
 
 	@Override
@@ -271,8 +271,11 @@ public class ScapeCloudPlugin extends Plugin
 
 		lastManualScreenshot = 0L;
 
-		if (config.email().length() > 0 && config.password().length() > 0) {
-			executor.submit(() -> api.authenticate(config.email(), config.password(), this::addAndRemoveButtons));
+		if (config.uploadKey().length() > 0) {
+			executor.submit(() -> {
+				api.authenticate(config.uploadKey());
+				this.addAndRemoveButtons();
+			});
 		}
 	}
 
